@@ -3,24 +3,36 @@
 #include <ctime>
 #include "ourGraphics.h"
 #include "speceffect.h"
+#include "flyer.h"
 
 using namespace std::chrono;
 
+struct orthoSpace
+{
+	float l, r, t, b;
+};
+
 OGLManager * gglm;
+glm::vec2 inputDir(0.0f);
+bool blockX = false, blockY = false;
 unsigned int texExpl;
 
 double rot_speed_coeff = 0.1;
 
-int winx = 800, winy = 600;
+int winx = 800, winy = 600; //starting win size
+int viewW = 800, viewH = 600; //viewspace
+int gameW = 800, gameH = 600; //workspace
+
 
 steady_clock::time_point lastUpdate = steady_clock::now();
 
 std::vector<speceffect*> effects;
+std::vector<flyer*> flyers;
 
 void addSpeceffect()
 {
-	float ex = (float)(rand() % 101 - 50) / 50.0f;
-	float ey = (float)(rand() % 101 - 50) / 50.0f;
+	float ex = (float)(rand() % 801 - 400);
+	float ey = (float)(rand() % 601 - 300);
 	printf("Adding effect at %f; %f\n",ex,ey);
 	effects.push_back(new speceffect(gglm, 2, 0.5, glm::vec3(ex,ey,1.0f), texExpl));
 }
@@ -35,8 +47,10 @@ float getDeltaTime()
 
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
+	
 	if (key == GLFW_KEY_E && action == GLFW_RELEASE)
 		addSpeceffect();
+
 }
 
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
@@ -60,6 +74,75 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 	glViewport(0, 0, width, height);
 }
 
+void window_callback(GLFWwindow* window, int width, int height)
+{
+	winx = width;
+	winy = height;
+}
+
+void calcOrthoSizes(orthoSpace &osRes)
+{
+	float xc = 4.0f;
+	float yc = 3.0f;
+
+	float ow=1.0f;
+	float oh=1.0f;
+
+	orthoSpace os = {-1.0f, 1.0f, -1.0f, 1.0f};
+
+	if (winx > winy)
+	{
+		xc = ((float)winx / (float)winy);
+		viewH = winy;
+		viewW = viewH * xc;
+		oh = 600.0f;
+		ow = 800 * xc;
+	}
+	else
+	{
+		yc = ((float)winy / (float)winx);
+		viewW = winx;
+		viewH = winx * yc;
+		ow = 800.0f;
+		oh = 600.0f * yc;
+	}
+
+	os.l = -ow * 0.5f;
+	os.r = ow * 0.5f;
+	os.b = -oh * 0.5f;
+	os.t = oh * 0.5f;
+
+	osRes = os;
+}
+
+void getInputAxisState(GLFWwindow *wnd, glm::vec2 &axState)
+{
+	glm::vec2 cAxState(0.0f);
+
+	int state = glfwGetKey(wnd, GLFW_KEY_UP);
+	if (state == GLFW_PRESS)
+	{
+		cAxState.y = 1.0f;
+	}
+	state = glfwGetKey(wnd, GLFW_KEY_DOWN);
+	if (state == GLFW_PRESS)
+	{
+		cAxState.y = -1.0f;
+	}
+	state = glfwGetKey(wnd, GLFW_KEY_LEFT);
+	if (state == GLFW_PRESS)
+	{
+		cAxState.x = -1.0f;
+	}
+	state = glfwGetKey(wnd, GLFW_KEY_RIGHT);
+	if (state == GLFW_PRESS)
+	{
+		cAxState.x = 1.0f;
+	}
+	axState = cAxState;
+}
+
+
 int main()
 {
 
@@ -71,6 +154,7 @@ int main()
 	glfwSetMouseButtonCallback(oMan.window, mouse_button_callback); //mouse button events
 	glfwSetCursorPosCallback(oMan.window, cursor_position_callback); //mouse cursor pos events
 	glfwSetScrollCallback(oMan.window, scroll_callback);  //mouse wheel or touchpad scrolling events
+	glfwSetWindowSizeCallback(oMan.window, window_callback);
 
 	unsigned int temptex = makeTexture("spsheet_plane.png");
 	texExpl = makeTexture("spsheet_expl.png");
@@ -82,6 +166,10 @@ int main()
 
 	float timer = 0.0f;
 	int cframe = 0;
+
+	flyers.push_back(
+		new flyer(0, glm::vec2(0.0f), &oMan, 25.0f, temptex, 3, 3, &inputDir)
+	);
 
 	while (!glfwWindowShouldClose(oMan.window))
 	{
@@ -97,10 +185,23 @@ int main()
 
 		glfwGetWindowSize(oMan.window, &winx, &winy);
 
-		glm::mat4 mat_persp = glm::perspectiveFov(
-			(float)winx / (float)winy,
-			(float)winx, (float)winy, 0.01f, 1000.0f);
+		//ortho matrix
 
+		orthoSpace ourOrthoSpace;
+		calcOrthoSizes(ourOrthoSpace);
+
+		glm::mat4 mat_proj = glm::ortho(
+			ourOrthoSpace.l, ourOrthoSpace.r,
+			ourOrthoSpace.b, ourOrthoSpace.t,
+			-100.0f,100.0f);
+
+		glm::mat4 mat_view = glm::mat4(1.0);
+
+		//view matrix
+		
+		glm::lookAt(glm::vec3(0.0f, 0.0f, 3.0f),
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(0.0f, 1.0f, 0.0f));
 
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -111,15 +212,23 @@ int main()
 		oMan.getShader(0)->setBool("light.use", false);
 
 		oMan.setDefaultProjections();
+		oMan.setProjection(mat_proj);
+		oMan.setView(mat_view);
 		oMan.updateProjectionForShader(0);
 		
-		drawSprites(oMan.getShader(0), glm::vec3(0.0f,0.0f,0.0f), glm::vec3(.5f), glm::vec3(1.0f), temptex, true, 3, 3, cframe);
+		//drawSprites(oMan.getShader(0), glm::vec3(0.0f,0.0f,0.0f), glm::vec3(25.0f), glm::vec3(1.0f), temptex, true, 3, 3, cframe);
 
 		for (int i = 0; i < effects.size(); i++)
 		{
 			effects[i]->processEffect(deltaTime);
 		}
 
+
+		getInputAxisState(oMan.window,inputDir);
+		for (int i = 0; i < flyers.size(); i++)
+		{
+			flyers[i]->processInternals(deltaTime,inputDir);
+		}
 		oMan.endDraw();
 
 	}
