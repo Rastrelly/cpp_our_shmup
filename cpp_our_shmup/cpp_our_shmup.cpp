@@ -1,22 +1,31 @@
 ﻿#include <iostream>
 #include <chrono>
 #include <ctime>
-#include "ourGraphics.h"
-#include "speceffect.h"
 #include "flyer.h"
 #include "enemySpawner.h"
+#include "speceffect.h"
 
 using namespace std::chrono;
+
+bool drawOnlyText=false;
 
 struct orthoSpace
 {
 	float l, r, t, b;
 };
 
+int score;
+
 OGLManager * gglm;
 glm::vec2 inputDir(0.0f);
+glm::vec2 playerPosition;
 bool blockX = false, blockY = false;
-unsigned int texExpl;
+
+bool usrWannaShoot = false;
+
+unsigned int texExpl = 0;
+unsigned int temptex = 0;
+unsigned int fontTexture = 0;
 
 double rot_speed_coeff = 0.1;
 
@@ -29,6 +38,18 @@ steady_clock::time_point lastUpdate = steady_clock::now();
 
 std::vector<speceffect*> effects;
 std::vector<flyer*> flyers;
+
+void printText(float x, float y, float size, string text, bool useTTF, FontWorker * fw)
+{
+	if (!useTTF)
+	{
+		printBitmapText(gglm->getShader(1), x, y, size, text, fontTexture);
+	}
+	else
+	{
+		fw->RenderText(gglm->getShader(1), text, x, y, size / 40.0f, glm::vec3(1.0f, 1.0f, 1.0f));
+	}
+}
 
 void collectGarbage()
 {
@@ -60,12 +81,10 @@ void collectGarbage()
 	}
 }
 
-void addSpeceffect()
+void addSpeceffect(glm::vec2 efpos)
 {
-	float ex = (float)(rand() % 801 - 400);
-	float ey = (float)(rand() % 601 - 300);
-	printf("Adding effect at %f; %f\n",ex,ey);
-	effects.push_back(new speceffect(gglm, 2, 0.5, glm::vec3(ex,ey,1.0f), texExpl));
+	printf("Adding effect at %f; %f\n", efpos.x, efpos.y);
+	effects.push_back(new speceffect(gglm, 2, 0.5, glm::vec3(efpos.x, efpos.y,1.0f), texExpl));
 }
 
 float getDeltaTime()
@@ -76,12 +95,26 @@ float getDeltaTime()
 	return deltaTime;
 }
 
+void restartGame(OGLManager * oglMan)
+{
+	score = 0;
+	for (int i = 0; i < flyers.size(); i++) delete(flyers[i]);
+	flyers.clear();
+	flyers.push_back(
+		new flyer(0, glm::vec2(0.0f), glm::vec2(0.0f), oglMan, 25.0f, temptex, 3, 3)
+	);
+}
+
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
 	
 	if (key == GLFW_KEY_E && action == GLFW_RELEASE)
-		addSpeceffect();
+		addSpeceffect(glm::vec2((float)(rand() % 801 - 400), (float)(rand() % 601 - 300)));
 
+	if (key == GLFW_KEY_R && action == GLFW_RELEASE)
+	{
+		restartGame(gglm);
+	}
 }
 
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
@@ -149,6 +182,7 @@ void calcOrthoSizes(orthoSpace &osRes)
 void getInputAxisState(GLFWwindow *wnd, glm::vec2 &axState)
 {
 	glm::vec2 cAxState(0.0f);
+	usrWannaShoot = false;
 
 	int state = glfwGetKey(wnd, GLFW_KEY_UP);
 	if (state == GLFW_PRESS)
@@ -169,6 +203,11 @@ void getInputAxisState(GLFWwindow *wnd, glm::vec2 &axState)
 	if (state == GLFW_PRESS)
 	{
 		cAxState.x = 1.0f;
+	}
+	state = glfwGetKey(wnd, GLFW_KEY_LEFT_CONTROL);
+	if (state == GLFW_PRESS)
+	{
+		usrWannaShoot = true;
 	}
 	axState = cAxState;
 }
@@ -197,25 +236,29 @@ int main()
 	glfwSetScrollCallback(oMan.window, scroll_callback);  //mouse wheel or touchpad scrolling events
 	glfwSetWindowSizeCallback(oMan.window, window_callback);
 
-	unsigned int temptex = makeTexture("spsheet_plane.png");
+    temptex = makeTexture("spsheet_plane.png");
 	unsigned int groundtex = makeTexture("ground1.png");
 	unsigned int enemtex = makeTexture("spsheet_enemy_1.png");
+	unsigned int bulletTex = makeTexture("bullet01.png");
 	texExpl = makeTexture("spsheet_expl.png");
+	fontTexture = makeTexture("font_map.png");
 
-	enemySpawner eSpawn(&flyers,&oMan);
+	enemySpawner eSpawn(&flyers,&oMan,&score);
 	eSpawn.addIndexedTexture(enemtex);
+	eSpawn.addIndexedTexture(bulletTex);
+
+	FontWorker fWork("C:\\Windows\\Fonts\\arial.ttf");
 
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glEnable(GL_DEPTH_TEST);
 
 	oMan.addShader("shader_light_vert.gls", "shader_light_frag.gls");
+	oMan.addShader("shader_ttf_font_vert.gls", "shader_ttf_font_frag.gls");
 
 	float timer = 0.0f;
 	int cframe = 0;
 
-	flyers.push_back(
-		new flyer(0, glm::vec2(0.0f), &oMan, 25.0f, temptex, 3, 3)
-	);
+	restartGame(&oMan);
 
 	float terra_shift = 0.0f;
 	float terra_timer = 0.0f;
@@ -246,42 +289,71 @@ int main()
 
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		//set lighting uniforms for shader
-		oMan.useShader(0);
-		oMan.getShader(0)->setBool("useColour", true);
-		oMan.getShader(0)->setBool("useTexture", true);
-		oMan.getShader(0)->setBool("light.use", false);
+		//set lighting uniforms for shader 0
+		if (!drawOnlyText)
+		{
+			oMan.useShader(0);
+			oMan.getShader(0)->setBool("useColour", true);
+			oMan.getShader(0)->setBool("useTexture", true);
+			oMan.getShader(0)->setBool("light.use", false);
+
+			oMan.setDefaultProjections();
+			oMan.setProjection(mat_proj);
+			oMan.setView(mat_view);
+			oMan.updateProjectionForShader(0);
+
+			//draw terrain
+			runTimer(terra_timer, deltaTime, 10.0f);
+			terra_shift = terra_timer * 80.0f;
+			drawSprites(oMan.getShader(0), glm::vec3(0.0f, 300.0f - (terra_shift - 800.0f), -1.0f), glm::vec3(400.0f), glm::vec3(1.0f), groundtex, true, 1, 1, 0);
+			drawSprites(oMan.getShader(0), glm::vec3(0.0f, 300.0f - terra_shift, -1.0f), glm::vec3(400.0f), glm::vec3(1.0f), groundtex, true, 1, 1, 0);
+			drawSprites(oMan.getShader(0), glm::vec3(0.0f, 300.0f - (terra_shift + 800.0f), -1.0f), glm::vec3(400.0f), glm::vec3(1.0f), groundtex, true, 1, 1, 0);
+
+			//process flyers
+			eSpawn.iterate(deltaTime);					//run spawner
+			getInputAxisState(oMan.window, inputDir);    //get curreny user axis and button inputs
+			playerPosition = flyers[0]->getPos();       //extract player position 
+			flyers[0]->setUserShootCall(usrWannaShoot); //transfer user's will to use violence
+
+			for (int i = 0; i < flyers.size(); i++)
+			{
+				flyers[i]->setPlrPos(playerPosition); //transfer player position
+				flyers[i]->processInternals(deltaTime, inputDir); //work on internal logic
+			}
+
+			eSpawn.runFiring();
+			eSpawn.checkBulletCollisions();
+
+			//process speceffects		
+
+			//spawn explosions
+			for (int i = 0; i < flyers.size(); i++)
+				if (flyers[i]->getDed() && flyers[i]->getNeedExplode())
+				{
+					if (i != 0) score++;
+					addSpeceffect(flyers[i]->getPos());
+				}
+
+			for (int i = 0; i < effects.size(); i++)
+			{
+				effects[i]->processEffect(deltaTime);
+			}
+		}
+		//set uniforms for shader 0
+		oMan.useShader(1);
 
 		oMan.setDefaultProjections();
 		oMan.setProjection(mat_proj);
-		oMan.setView(mat_view);
-		oMan.updateProjectionForShader(0);
+		oMan.updateProjectionForShader(1);
 
-		//draw terrain
-		runTimer(terra_timer, deltaTime, 10.0f);
-		terra_shift = terra_timer * 80.0f;
-		drawSprites(oMan.getShader(0), glm::vec3(0.0f, 300.0f - (terra_shift - 800.0f), -1.0f), glm::vec3(400.0f), glm::vec3(1.0f), groundtex, true, 1, 1, 0);
-		drawSprites(oMan.getShader(0), glm::vec3(0.0f, 300.0f - terra_shift, -1.0f), glm::vec3(400.0f), glm::vec3(1.0f), groundtex, true, 1, 1, 0);
-		drawSprites(oMan.getShader(0), glm::vec3(0.0f, 300.0f - (terra_shift + 800.0f), -1.0f), glm::vec3(400.0f), glm::vec3(1.0f), groundtex, true, 1, 1, 0);
+		//print score
+		printText(-380.0f, 265.0f, 20.0f, to_string(score).c_str(), true, &fWork);
 
-		//process speceffects
-		for (int i = 0; i < effects.size(); i++)
-		{
-			effects[i]->processEffect(deltaTime);
-		}
-
-		//process flyers
-		eSpawn.iterate(deltaTime);
-		getInputAxisState(oMan.window,inputDir);
-		for (int i = 0; i < flyers.size(); i++)
-		{
-			flyers[i]->processInternals(deltaTime,inputDir);
-		}
+		//render stuff
 		oMan.endDraw();
 
 		//grabage collection
 		// (remove elements that are no longer active)
 		collectGarbage();
-
 	}
 }

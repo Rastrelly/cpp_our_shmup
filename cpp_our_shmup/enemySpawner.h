@@ -10,14 +10,18 @@ public:
 	float timer;
 	std::vector<flyer*> *pFlyers;
 	OGLManager * pMgr;
+	int * pScore;
 
 	std::vector<unsigned int> texIndices;
 
-	enemySpawner(std::vector<flyer*> *flyersContainer, OGLManager * mgr);
+	enemySpawner(std::vector<flyer*> *flyersContainer,
+		OGLManager * mgr, int * scoreRef);
 
 	int addIndexedTexture(unsigned int tex);
 	void iterate(float dt);
-	void spawnEnemy(int eType);
+	void runFiring();
+	void spawnEnemy(int eType, glm::vec2 spos, glm::vec2 tpos);
+	void checkBulletCollisions();
 
 	
 };
