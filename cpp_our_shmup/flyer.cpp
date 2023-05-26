@@ -2,8 +2,7 @@
 
 flyer::flyer(int vmyType, glm::vec2 vpos,
 	OGLManager *vmyManager, float vr,
-	unsigned int vmyTex, int vanimR, int vanimC,
-	glm::vec2 * vDirAxis)
+	unsigned int vmyTex, int vanimR, int vanimC)
 {
 	myType = vmyType;
 	pos = vpos;
@@ -14,16 +13,24 @@ flyer::flyer(int vmyType, glm::vec2 vpos,
 	myManager = vmyManager;
 	fps = 15.0f;
 	nframes = animR * animC;
-	dirAxis = vDirAxis;
 
 	xmin = -400.0f;
 	xmax = 400.0f;
 	ymin = -300.0f;
 	ymax = 300.0f;
 
+	diesOob = true;
+	ded = false;
+
 	if (myType == 0)
 	{
-		speed = 100.0f;
+		speed = 300.0f;
+		diesOob = false;
+	}
+
+	if (myType == 1)
+	{
+		speed = 400.0f;
 	}
 }
 
@@ -37,8 +44,12 @@ void flyer::processInternals(float dt, glm::vec2 dirAxR)
 		cframe++;
 		if (cframe > nframes - 1) cframe = 0;
 	}
+
 	//motion
-	if (myType == 0)
+
+	glm::vec2 moveVec(0.0f);
+
+	if (myType == 0) //user ship
 	{
 
 		if (glm::length(dirAxR)!=0.0f)
@@ -49,7 +60,7 @@ void flyer::processInternals(float dt, glm::vec2 dirAxR)
 		{
 			dir = dirAxR;
 		}
-		glm::vec2 moveVec(0.0f);
+		
 		moveVec = dir * speed * dt;
 
 		pos += moveVec;
@@ -58,7 +69,21 @@ void flyer::processInternals(float dt, glm::vec2 dirAxR)
 		if (pos.x > xmax) pos.x = xmax;
 		if (pos.y < ymin) pos.y = ymin;
 		if (pos.y > ymax) pos.y = ymax;
-		printf("Moveinp: x = %f, y = %f, dx = %f, dy = %f, spd = %f, dt = %f\n", pos.x, pos.y, dir.x, dir.y, speed, dt);
+		//printf("Moveinp: x = %f, y = %f, dx = %f, dy = %f, spd = %f, dt = %f\n", pos.x, pos.y, dir.x, dir.y, speed, dt);
+	}
+
+	if (myType == 1) //enemy 1
+	{
+		dir = glm::vec2(0.0f,-1.0f);
+		moveVec = dir * speed * dt;
+		pos += moveVec;
+	}
+
+	if (diesOob)
+	{
+		if (getOutOfBounds(false, false, true)) {
+			setDed(true);
+		}
 	}
 
 	//render
@@ -69,5 +94,27 @@ void flyer::processInternals(float dt, glm::vec2 dirAxR)
 void flyer::drawMe()
 {
 	glm::vec3 npos(pos.x,pos.y,0.0f);
-	drawSprites(myManager->getShader(0), npos, glm::vec3(r), glm::vec3(1.0f), myTex, true, 3, 3, cframe);
+	drawSprites(myManager->getShader(0), npos, glm::vec3(r), glm::vec3(1.0f), myTex, true, animR, animC, cframe);
+}
+
+//ignoreX, ignoreY if true make the function ignore said axis
+bool flyer::getOutOfBounds(bool ignoreX, bool ignoreY, bool ignoreYmax)
+{
+
+	if (!ignoreX)
+	{
+		if (pos.x < xmin) return true;
+		if (pos.x > xmax) return true;
+	}
+	if (!ignoreY)
+	{
+		if (pos.y < ymin) return true;
+		if (!ignoreYmax)
+		if (pos.y > ymax) return true;
+	}
+
+	if (!ignoreYmax)
+		if (pos.y > ymax) return true;
+
+	return false;
 }

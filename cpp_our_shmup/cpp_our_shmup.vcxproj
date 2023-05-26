@@ -155,6 +155,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="cpp_our_shmup.cpp" />
+    <ClCompile Include="enemySpawner.cpp" />
     <ClCompile Include="flyer.cpp" />
     <ClCompile Include="glad.c" />
     <ClCompile Include="ourGraphics.cpp" />
@@ -164,6 +165,7 @@
     <ClCompile Include="speceffect.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="enemySpawner.h" />
     <ClInclude Include="flyer.h" />
     <ClInclude Include="ourGraphics.h" />
     <ClInclude Include="ourGraphicsFreeType.h" />

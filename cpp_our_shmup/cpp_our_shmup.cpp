@@ -4,6 +4,7 @@
 #include "ourGraphics.h"
 #include "speceffect.h"
 #include "flyer.h"
+#include "enemySpawner.h"
 
 using namespace std::chrono;
 
@@ -28,6 +29,36 @@ steady_clock::time_point lastUpdate = steady_clock::now();
 
 std::vector<speceffect*> effects;
 std::vector<flyer*> flyers;
+
+void collectGarbage()
+{
+	//collect grabage on effects
+	int l = effects.size();
+	int i = 0;
+	while(i < effects.size())
+	{
+		if (effects[i]->life <= 0)
+		{
+			delete(effects[i]);
+			effects.erase(effects.begin()+i);
+		}
+		else i++;
+	}
+
+	//collect grabage on flyers
+	l = flyers.size();
+	i = 0;
+	while (i < flyers.size())
+	{
+		if (flyers[i]->getDed())
+		{
+			delete(flyers[i]);
+			flyers.erase(flyers.begin() + i);
+			std::cout << "Flyer garbage entity collected!\n";
+		}
+		else i++;
+	}
+}
 
 void addSpeceffect()
 {
@@ -157,7 +188,11 @@ int main()
 	glfwSetWindowSizeCallback(oMan.window, window_callback);
 
 	unsigned int temptex = makeTexture("spsheet_plane.png");
+	unsigned int enemtex = makeTexture("spsheet_enemy_1.png");
 	texExpl = makeTexture("spsheet_expl.png");
+
+	enemySpawner eSpawn(&flyers,&oMan);
+	eSpawn.addIndexedTexture(enemtex);
 
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glEnable(GL_DEPTH_TEST);
@@ -168,7 +203,7 @@ int main()
 	int cframe = 0;
 
 	flyers.push_back(
-		new flyer(0, glm::vec2(0.0f), &oMan, 25.0f, temptex, 3, 3, &inputDir)
+		new flyer(0, glm::vec2(0.0f), &oMan, 25.0f, temptex, 3, 3)
 	);
 
 	while (!glfwWindowShouldClose(oMan.window))
@@ -182,6 +217,8 @@ int main()
 			cframe++;
 			if (cframe > 8)cframe = 0;
 		}
+
+		eSpawn.iterate(deltaTime);
 
 		glfwGetWindowSize(oMan.window, &winx, &winy);
 
@@ -230,6 +267,8 @@ int main()
 			flyers[i]->processInternals(deltaTime,inputDir);
 		}
 		oMan.endDraw();
+
+		collectGarbage();
 
 	}
 }

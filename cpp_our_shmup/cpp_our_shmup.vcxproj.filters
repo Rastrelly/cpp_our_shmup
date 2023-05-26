@@ -39,6 +39,9 @@
     <ClCompile Include="speceffect.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
+    <ClCompile Include="enemySpawner.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ourGraphics.h">
@@ -57,6 +60,9 @@
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
     <ClInclude Include="speceffect.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="enemySpawner.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
   </ItemGroup>
