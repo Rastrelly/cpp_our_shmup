@@ -127,7 +127,7 @@ void calcOrthoSizes(orthoSpace &osRes)
 		viewH = winy;
 		viewW = viewH * xc;
 		oh = 600.0f;
-		ow = 800 * xc;
+		ow = oh * xc;
 	}
 	else
 	{
@@ -135,7 +135,7 @@ void calcOrthoSizes(orthoSpace &osRes)
 		viewW = winx;
 		viewH = winx * yc;
 		ow = 800.0f;
-		oh = 600.0f * yc;
+		oh = ow * yc;
 	}
 
 	os.l = -ow * 0.5f;
@@ -173,6 +173,16 @@ void getInputAxisState(GLFWwindow *wnd, glm::vec2 &axState)
 	axState = cAxState;
 }
 
+void runTimer(float &timer, float dt, float timerLimit)
+{
+	timer += dt;
+
+	if (timer > timerLimit)
+	{
+		timer = 0.0f;
+	}
+}
+
 
 int main()
 {
@@ -188,6 +198,7 @@ int main()
 	glfwSetWindowSizeCallback(oMan.window, window_callback);
 
 	unsigned int temptex = makeTexture("spsheet_plane.png");
+	unsigned int groundtex = makeTexture("ground1.png");
 	unsigned int enemtex = makeTexture("spsheet_enemy_1.png");
 	texExpl = makeTexture("spsheet_expl.png");
 
@@ -206,19 +217,12 @@ int main()
 		new flyer(0, glm::vec2(0.0f), &oMan, 25.0f, temptex, 3, 3)
 	);
 
+	float terra_shift = 0.0f;
+	float terra_timer = 0.0f;
+
 	while (!glfwWindowShouldClose(oMan.window))
 	{
 		float deltaTime = getDeltaTime();
-		timer += deltaTime;
-
-		if (timer > 0.1) 
-		{
-			timer = 0.0f;
-			cframe++;
-			if (cframe > 8)cframe = 0;
-		}
-
-		eSpawn.iterate(deltaTime);
 
 		glfwGetWindowSize(oMan.window, &winx, &winy);
 
@@ -252,15 +256,22 @@ int main()
 		oMan.setProjection(mat_proj);
 		oMan.setView(mat_view);
 		oMan.updateProjectionForShader(0);
-		
-		//drawSprites(oMan.getShader(0), glm::vec3(0.0f,0.0f,0.0f), glm::vec3(25.0f), glm::vec3(1.0f), temptex, true, 3, 3, cframe);
 
+		//draw terrain
+		runTimer(terra_timer, deltaTime, 10.0f);
+		terra_shift = terra_timer * 80.0f;
+		drawSprites(oMan.getShader(0), glm::vec3(0.0f, 300.0f - (terra_shift - 800.0f), -1.0f), glm::vec3(400.0f), glm::vec3(1.0f), groundtex, true, 1, 1, 0);
+		drawSprites(oMan.getShader(0), glm::vec3(0.0f, 300.0f - terra_shift, -1.0f), glm::vec3(400.0f), glm::vec3(1.0f), groundtex, true, 1, 1, 0);
+		drawSprites(oMan.getShader(0), glm::vec3(0.0f, 300.0f - (terra_shift + 800.0f), -1.0f), glm::vec3(400.0f), glm::vec3(1.0f), groundtex, true, 1, 1, 0);
+
+		//process speceffects
 		for (int i = 0; i < effects.size(); i++)
 		{
 			effects[i]->processEffect(deltaTime);
 		}
 
-
+		//process flyers
+		eSpawn.iterate(deltaTime);
 		getInputAxisState(oMan.window,inputDir);
 		for (int i = 0; i < flyers.size(); i++)
 		{
@@ -268,6 +279,8 @@ int main()
 		}
 		oMan.endDraw();
 
+		//grabage collection
+		// (remove elements that are no longer active)
 		collectGarbage();
 
 	}
