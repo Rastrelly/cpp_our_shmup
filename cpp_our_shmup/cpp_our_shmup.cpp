@@ -330,7 +330,7 @@ int main()
 			for (int i = 0; i < flyers.size(); i++)
 				if (flyers[i]->getDed() && flyers[i]->getNeedExplode())
 				{
-					if (i != 0) score++;
+					if (i != 0) score+= flyers[i]->getScoreValue();
 					addSpeceffect(flyers[i]->getPos());
 				}
 

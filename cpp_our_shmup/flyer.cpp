@@ -4,6 +4,7 @@ flyer::flyer(int vmyType, glm::vec2 vpos, glm::vec2 tpos,
 	OGLManager *vmyManager, float vr,
 	unsigned int vmyTex, int vanimR, int vanimC)
 {
+
 	myType = vmyType;
 	pos = vpos;
 	targetPos = tpos;
@@ -17,6 +18,8 @@ flyer::flyer(int vmyType, glm::vec2 vpos, glm::vec2 tpos,
 	nframes = animR * animC;
 
 	needExplode = false;
+
+	scoreValue = 0;
 
 	xmin = -400.0f;
 	xmax = 400.0f;
@@ -50,6 +53,7 @@ flyer::flyer(int vmyType, glm::vec2 vpos, glm::vec2 tpos,
 		reloadTimer = reloadTime;
 		bulletId = 3;
 		hp = 1.0f;
+		scoreValue = 100;
 	}
 
 	if (myType == 2) //plr bullet

@@ -22,6 +22,7 @@ private:
 	int bulletId;         //bullet actor id
 	bool canShoot;        //actor is ready to fire a bullet
 	bool usrShootCall;    //user's shoot input is pressed
+	int scoreValue;		  //how much points is given for shooting down	
 
 	float hp;             //current hitpoints
 	float dmg;            //hp damage dealt by if bullet
@@ -72,6 +73,7 @@ public:
 	bool getNeedExplode() { return needExplode; };
 	float getDamage() { return dmg; };
 	float getHp() { return hp; }
+	int getScoreValue() { return scoreValue; };
 
 
 };
