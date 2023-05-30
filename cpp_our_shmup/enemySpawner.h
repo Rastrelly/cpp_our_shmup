@@ -21,8 +21,6 @@ public:
 	void iterate(float dt);
 	void runFiring();
 	void spawnEnemy(int eType, glm::vec2 spos, glm::vec2 tpos);
-	void checkBulletCollisions();
-
-	
+	void checkBulletCollisions();	
 };
 

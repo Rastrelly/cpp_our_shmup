@@ -113,10 +113,14 @@ void enemySpawner::checkBulletCollisions()
 	int l = pFlyers->size();
 
 	for (int i = 0; i < l; i++)
+	{
+		if ((*pFlyers)[i]->getDed()) continue;
 		if ((*pFlyers)[i]->getIsBullet()) //check each flyer that is a bullet
 		{
 			float cr1 = (*pFlyers)[i]->getCollisionRadius();
 			for (int j = 0; j < l; j++)       //for each flyer that isn't a bullet
+			{
+				if ((*pFlyers)[i]->getDed()) break;
 				if ((!(*pFlyers)[j]->getIsBullet()) && (i != j) && (!(*pFlyers)[i]->getDed()) && ((*pFlyers)[j]->getTeam() != (*pFlyers)[i]->getTeam()))
 				{
 					float cr2 = (*pFlyers)[j]->getCollisionRadius();
@@ -128,5 +132,7 @@ void enemySpawner::checkBulletCollisions()
 						(*pFlyers)[i]->setDed(true);
 					}
 				}
+			}
 		}
+	}
 }
