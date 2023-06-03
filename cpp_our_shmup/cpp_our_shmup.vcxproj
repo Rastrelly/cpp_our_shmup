@@ -80,6 +80,8 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
+    <IncludePath>C:\CPPLIBS\assimp-5.2.5\built\include;C:\CPPLIBS\assimp-5.2.5\include;C:\CPPLIBS\glm;C:\CPPLIBS\glad\include;C:\CPPLIBS\stb_image;C:\CPPLIBS\freetype-windows-binaries-2.13.0\include;C:\CPPLIBS\glfw32\include;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\CPPLIBS\assimp-5.2.5\built\lib\Debug;C:\CPPLIBS\freetype-windows-binaries-2.13.0\release static\vs2015-2022\win32;C:\CPPLIBS\glfw32\lib-vc2017;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
@@ -132,6 +134,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>glfw3.lib;freetype.lib;assimp-vc141-mtd.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">

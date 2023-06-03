@@ -22,18 +22,45 @@ void enemySpawner::iterate(float dt)
 		//std::cout << "Spawner iteration: " << iteration << std::endl;
 	}
 
+	if (bossExists()) iterationLocked = true;
+
 	if (iterationLocked) return; //return gate to not spawn if
 	//iteration locked
 
 	if ((int)iteration % 2 == 0) //dangerous spot! can cause
 	//we can get to int limit early
 	{
-		if (rand() % 101 < 51)
+		if (rand() % 101 < 51 + round(iteration/250.0f))
 		{
-			spawnEnemy(1,glm::vec2(0.0f), glm::vec2(0.0f));
+			spawnEnemy(1,glm::vec2((float)(rand() % 801 - 400),350.0f), glm::vec2(0.0f));
+			iterationLocked = true;
+		} else if (rand() % 101 < 51 + round(iteration / 250.0f))
+		{
+			spawnEnemy(4,glm::vec2((float)(rand() % 721 - 360), 350.0f), glm::vec2(0.0f));
 			iterationLocked = true;
 		}
+		else if (rand() % 101 < 51 + round(iteration / 250.0f))
+		{
+			if (rand()%2==1) spawnEnemyWave(1,rand()%3);
+			else spawnEnemyWave(4, rand() % 3);
+		}
 	}
+
+	if ((int)iteration % 4 == 0)
+	{
+		int hpc = 66 - round(iteration / 250.0f);
+		if (hpc < 10) hpc = 10;
+		if (rand() % 101 < hpc) //hp
+		{
+			spawnEnemy(5, glm::vec2((float)(rand() % 721 - 360), 350.0f), glm::vec2(0.0f));
+		}
+	}
+
+	if ((int)iteration % 250 == 0)
+	{
+		spawnEnemy(6, glm::vec2(0.0f, 350.0f), glm::vec2(0.0f));
+	}
+
 }
 
 int enemySpawner::addIndexedTexture(unsigned int tex)
@@ -46,7 +73,10 @@ int texIndexByEnemyId(int enemyId)
 {
 	if (enemyId == 1) return 0; //enemy ship 1
 	if (enemyId == 2) return 1; //plr bullet
-	if (enemyId == 3) return 1; //enemy bullet
+	if (enemyId == 3) return 2; //enemy bullet
+	if (enemyId == 4) return 3; //enemy ship 2
+	if (enemyId == 5) return 4; //hp powerup
+	if (enemyId == 6) return 5; //hp powerup
 }
 
 void enemySpawner::spawnEnemy(int eType, glm::vec2 spos, glm::vec2 tpos)
@@ -55,15 +85,13 @@ void enemySpawner::spawnEnemy(int eType, glm::vec2 spos, glm::vec2 tpos)
 	{
 	    glm::vec2 spawnPos(0.0f);
 		int aR = 1, aC = 1;
-		if (eType == 1)
+		if (eType == 1 || eType == 4 || eType == 5 | eType == 6)
 		{
-			int spX = rand() % 801 - 400;
-			int spY = 350;
-			spawnPos.x = (float)spX;
-			spawnPos.y = (float)spY;
+			spawnPos = spos;
 			aR = 2;
 			aC = 2;
 		}
+
 		if (eType == 2 || eType == 3)
 		{
 			spawnPos = spos;
@@ -72,7 +100,42 @@ void enemySpawner::spawnEnemy(int eType, glm::vec2 spos, glm::vec2 tpos)
 		pFlyers->push_back(
 			new flyer(eType, spawnPos, tpos, pMgr, 25.0f, texIndices[texIndexByEnemyId(eType)], aR, aC)
 		);
-		std::cout << "Enemy " << eType << " spawned!\n";
+		std::cout << "Enemy " << eType << " spawned (iter =="<< iteration <<")!\n";
+	}
+		
+}
+
+float getWaveCY(float cX, int waveType)
+{
+	if (waveType == 0)
+	{
+		return 350.0f;
+	}
+	if (waveType == 1)
+	{
+		float cxT = (cX - 40.0f) / 800.0f;
+		float cyT = pow(cxT, 2);
+		return 350.0f + (100.0f*cyT - 25.0f);
+	}
+	if (waveType == 2)
+	{
+		float cxT = (cX - 40.0f) / 800.0f;
+		float cyT = cos(10*3.14f*cxT);
+		return 350.0f + (100.0f*cyT - 25.0f);
+	}
+}
+
+void enemySpawner::spawnEnemyWave(int eType, int waveType)
+{
+	float startX = 40.0f;
+	float endX = 760.0f;
+	float dX = 80.0f;
+	float cX = startX;
+	float cY = 0.0f;
+	for (cX = startX; cX <= endX; cX += dX)
+	{
+		cY = getWaveCY(cX,waveType);
+		spawnEnemy(eType,glm::vec2(cX - 380.0f,cY),glm::vec2(0.0f));
 	}
 }
 
@@ -84,20 +147,50 @@ void enemySpawner::runFiring()
 	{
 		if ((*pFlyers)[i]->getCanShoot())
 		{
-			//remove can shoot flag
-			(*pFlyers)[i]->setCanShoot(false);
-			//spawn a bullet
+			if ((*pFlyers)[i]->getMyType() == 6)
+			{
+				//remove can shoot flag
+				(*pFlyers)[i]->setCanShoot(false);
+				//spawn a bullet
 
-			glm::vec2 csPos = (*pFlyers)[i]->getPos();
-			glm::vec2 tsPos = (*pFlyers)[i]->getTargetPos();
-			spawnEnemy(
-				(*pFlyers)[i]->getBulletId(),
-				csPos, 
-				tsPos
+				glm::vec2 csPos = (*pFlyers)[i]->getPos();
+				glm::vec2 tsPos = (*pFlyers)[i]->getTargetPos();
+				spawnEnemy(
+					(*pFlyers)[i]->getBulletId(),
+					csPos,
+					tsPos
 				);
-			//report on firing
-			printf("Ship %d trying to shoot: p = %f, %f; t = %f, %f\n",
-				i, csPos.x, csPos.y, tsPos.x, tsPos.y);
+				spawnEnemy(
+					(*pFlyers)[i]->getBulletId(),
+					csPos + glm::vec2(-20.0f,0.0f),
+					tsPos + glm::vec2(-20.0f, 0.0f)
+				);
+				spawnEnemy(
+					(*pFlyers)[i]->getBulletId(),
+					csPos + glm::vec2(20.0f, 0.0f),
+					tsPos + glm::vec2(20.0f, 0.0f)
+				);
+				//report on firing
+				printf("Ship %d trying to shoot: p = %f, %f; t = %f, %f\n",
+					i, csPos.x, csPos.y, tsPos.x, tsPos.y);
+			}
+			else
+			{
+				//remove can shoot flag
+				(*pFlyers)[i]->setCanShoot(false);
+				//spawn a bullet
+
+				glm::vec2 csPos = (*pFlyers)[i]->getPos();
+				glm::vec2 tsPos = (*pFlyers)[i]->getTargetPos();
+				spawnEnemy(
+					(*pFlyers)[i]->getBulletId(),
+					csPos,
+					tsPos
+				);
+				//report on firing
+				printf("Ship %d trying to shoot: p = %f, %f; t = %f, %f\n",
+					i, csPos.x, csPos.y, tsPos.x, tsPos.y);
+			}
 
 		}
 	}
@@ -121,7 +214,7 @@ void enemySpawner::checkBulletCollisions()
 			for (int j = 0; j < l; j++)       //for each flyer that isn't a bullet
 			{
 				if ((*pFlyers)[i]->getDed()) break;
-				if ((!(*pFlyers)[j]->getIsBullet()) && (i != j) && (!(*pFlyers)[i]->getDed()) && ((*pFlyers)[j]->getTeam() != (*pFlyers)[i]->getTeam()))
+				if ((!(*pFlyers)[j]->getIsBullet()) && (!(*pFlyers)[j]->getIsPowerUp()) && (i != j) && (!(*pFlyers)[i]->getDed()) && ((*pFlyers)[j]->getTeam() != (*pFlyers)[i]->getTeam()))
 				{
 					float cr2 = (*pFlyers)[j]->getCollisionRadius();
 					float cd = cr1 + cr2;
@@ -134,5 +227,27 @@ void enemySpawner::checkBulletCollisions()
 				}
 			}
 		}
+		if ((*pFlyers)[i]->getIsPowerUp())
+		{
+			float od = getDist((*pFlyers)[i]->getPos(), (*pFlyers)[0]->getPos());
+			if (od < 32.0f)
+			{
+				if ((*pFlyers)[i]->getPowerupType() == 0) (*pFlyers)[0]->increaseHp();
+				(*pFlyers)[i]->setDed(true);
+			}
+		}
 	}
+}
+
+
+bool enemySpawner::bossExists()
+{
+	int l = pFlyers->size();
+
+	for (int i = 0; i < l; i++)
+	{
+		if ((*pFlyers)[i]->getDed()) continue;
+		if ((*pFlyers)[i]->getIsBoss()) return true;
+	}
+	return false;
 }

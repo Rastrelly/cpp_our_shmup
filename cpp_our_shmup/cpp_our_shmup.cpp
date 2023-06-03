@@ -33,6 +33,11 @@ int winx = 800, winy = 600; //starting win size
 int viewW = 800, viewH = 600; //viewspace
 int gameW = 800, gameH = 600; //workspace
 
+bool pause = false;
+
+bool ppress = false;
+bool rpress = false;
+
 
 steady_clock::time_point lastUpdate = steady_clock::now();
 
@@ -105,6 +110,14 @@ void restartGame(OGLManager * oglMan)
 	);
 }
 
+void pauseGame(OGLManager * oglMan)
+{
+	if (!pause)
+		pause = true;
+	else
+		pause = false;
+}
+
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
 	
@@ -114,6 +127,10 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 	if (key == GLFW_KEY_R && action == GLFW_RELEASE)
 	{
 		restartGame(gglm);
+	}
+	if (key == GLFW_KEY_ESCAPE && action == GLFW_RELEASE)
+	{
+		pauseGame(gglm);
 	}
 }
 
@@ -184,6 +201,56 @@ void getInputAxisState(GLFWwindow *wnd, glm::vec2 &axState)
 	glm::vec2 cAxState(0.0f);
 	usrWannaShoot = false;
 
+	//for gamepad
+	if (glfwJoystickIsGamepad(GLFW_JOYSTICK_1))
+	{
+		GLFWgamepadstate state;
+		if (glfwGetGamepadState(GLFW_JOYSTICK_1, &state))
+		{
+			if (state.buttons[GLFW_GAMEPAD_BUTTON_A]==GLFW_PRESS)
+			{
+				usrWannaShoot = true;
+			}
+			if (state.buttons[GLFW_GAMEPAD_BUTTON_A] == GLFW_RELEASE)
+			{
+				usrWannaShoot = false;
+			}
+
+			if (state.buttons[GLFW_GAMEPAD_BUTTON_BACK]==GLFW_PRESS)
+			{
+				if (!rpress)
+				{
+					rpress = true;
+					restartGame(gglm);
+				}
+			}
+
+			if (state.buttons[GLFW_GAMEPAD_BUTTON_BACK] == GLFW_RELEASE)
+			{
+				rpress = false;
+			}
+
+			if (state.buttons[GLFW_GAMEPAD_BUTTON_START]==GLFW_PRESS)
+			{
+				if (!ppress)
+				{
+					pauseGame(gglm);
+					ppress = true;
+				}
+			}
+
+			if (state.buttons[GLFW_GAMEPAD_BUTTON_START] == GLFW_RELEASE)
+			{
+				ppress = false;
+			}
+		}
+
+		cAxState.x = abs(state.axes[GLFW_GAMEPAD_AXIS_LEFT_X]) > 0.05 ? state.axes[GLFW_GAMEPAD_AXIS_LEFT_X] : 0.0f;
+		cAxState.y = abs(state.axes[GLFW_GAMEPAD_AXIS_LEFT_Y]) > 0.05 ? -state.axes[GLFW_GAMEPAD_AXIS_LEFT_Y] : 0.0f;
+		std::printf("GAMEPAD AX L: %f ; %f\n", cAxState.x, cAxState.y);
+	}
+
+	//for keyboard
 	int state = glfwGetKey(wnd, GLFW_KEY_UP);
 	if (state == GLFW_PRESS)
 	{
@@ -208,7 +275,8 @@ void getInputAxisState(GLFWwindow *wnd, glm::vec2 &axState)
 	if (state == GLFW_PRESS)
 	{
 		usrWannaShoot = true;
-	}
+	}	
+
 	axState = cAxState;
 }
 
@@ -239,13 +307,22 @@ int main()
     temptex = makeTexture("spsheet_plane.png");
 	unsigned int groundtex = makeTexture("ground1.png");
 	unsigned int enemtex = makeTexture("spsheet_enemy_1.png");
+	unsigned int enemtex2 = makeTexture("spsheet_enemy_2.png");
+	unsigned int boss1tex = makeTexture("spsheet_boss_1.png");
+	unsigned int pup1 = makeTexture("spsheet_heal.png");
 	unsigned int bulletTex = makeTexture("bullet01.png");
+	unsigned int bulletTex2 = makeTexture("bullet02.png");
+	unsigned int uihp = makeTexture("hp_mark.png");
 	texExpl = makeTexture("spsheet_expl.png");
 	fontTexture = makeTexture("font_map.png");
 
 	enemySpawner eSpawn(&flyers,&oMan,&score);
 	eSpawn.addIndexedTexture(enemtex);
 	eSpawn.addIndexedTexture(bulletTex);
+	eSpawn.addIndexedTexture(bulletTex2);
+	eSpawn.addIndexedTexture(enemtex2);
+	eSpawn.addIndexedTexture(pup1);
+	eSpawn.addIndexedTexture(boss1tex);
 
 	FontWorker fWork("C:\\Windows\\Fonts\\arial.ttf");
 
@@ -266,6 +343,8 @@ int main()
 	while (!glfwWindowShouldClose(oMan.window))
 	{
 		float deltaTime = getDeltaTime();
+
+		if (pause) deltaTime = 0.0f;
 
 		glfwGetWindowSize(oMan.window, &winx, &winy);
 
@@ -302,7 +381,9 @@ int main()
 			oMan.setView(mat_view);
 			oMan.updateProjectionForShader(0);
 
+			
 			//draw terrain
+			if (!pause)
 			runTimer(terra_timer, deltaTime, 10.0f);
 			terra_shift = terra_timer * 80.0f;
 			drawSprites(oMan.getShader(0), glm::vec3(0.0f, 300.0f - (terra_shift - 800.0f), -1.0f), glm::vec3(400.0f), glm::vec3(1.0f), groundtex, true, 1, 1, 0);
@@ -310,19 +391,24 @@ int main()
 			drawSprites(oMan.getShader(0), glm::vec3(0.0f, 300.0f - (terra_shift + 800.0f), -1.0f), glm::vec3(400.0f), glm::vec3(1.0f), groundtex, true, 1, 1, 0);
 
 			//process flyers
+			if (!pause)
 			eSpawn.iterate(deltaTime);					//run spawner
-			getInputAxisState(oMan.window, inputDir);    //get curreny user axis and button inputs
+			getInputAxisState(oMan.window, inputDir);    //get current user axis and button inputs
 			playerPosition = flyers[0]->getPos();       //extract player position 
 			flyers[0]->setUserShootCall(usrWannaShoot); //transfer user's will to use violence
 
+			if (!pause)
 			for (int i = 0; i < flyers.size(); i++)
 			{
 				flyers[i]->setPlrPos(playerPosition); //transfer player position
 				flyers[i]->processInternals(deltaTime, inputDir); //work on internal logic
 			}
 
-			eSpawn.runFiring();
-			eSpawn.checkBulletCollisions();
+			if (!pause)
+			{
+				eSpawn.runFiring();
+				eSpawn.checkBulletCollisions();
+			}
 
 			//process speceffects		
 
@@ -339,6 +425,21 @@ int main()
 				effects[i]->processEffect(deltaTime);
 			}
 		}
+
+		//draw hp
+		if (flyers.size() > 0 && flyers[0] != NULL)
+			if (flyers[0]->getTeam() == 0)
+			{
+				int plHp = flyers[0]->getHp();
+				for (int i = 0; i < plHp; i++)
+				{
+					float hpX = 380.0f - ((plHp-i-1) * 32);
+					float hpY = 280.0f;
+					drawPlane(oMan.getShader(0), glm::vec3(hpX, hpY, 0.0f), glm::vec3(16.0f), glm::vec3(1.0f), uihp, true);
+				}
+			}
+
+
 		//set uniforms for shader 0
 		oMan.useShader(1);
 
@@ -348,7 +449,9 @@ int main()
 
 		//print score
 		printText(-380.0f, 265.0f, 20.0f, to_string(score).c_str(), true, &fWork);
-
+		
+		if (pause) printText(-100.0f, 0.0f, 20.0f, "PAUSE", true, &fWork);
+		
 		//render stuff
 		oMan.endDraw();
 

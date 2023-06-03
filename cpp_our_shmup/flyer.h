@@ -23,9 +23,18 @@ private:
 	bool canShoot;        //actor is ready to fire a bullet
 	bool usrShootCall;    //user's shoot input is pressed
 	int scoreValue;		  //how much points is given for shooting down	
+	int myTrajectory;     //0 - straight, 1 - sin
+
+	float trajA, trajB;   //trajectory parameters if needed
 
 	float hp;             //current hitpoints
 	float dmg;            //hp damage dealt by if bullet
+
+	bool isPowerUp;		  //flyer is a powerup	
+
+	bool isBoss;          //flyer is boss
+
+	int powerUpType;      //1 - healing
 	
 	//working values
 	int cframe;
@@ -39,6 +48,12 @@ private:
 	bool ded;
 	bool needExplode;
 
+	bool hideSprite; //used for iframe blink
+
+	float inCounter;
+
+	float postHitTimer; //provides iframes for player
+
 	OGLManager *myManager;
 	glm::vec2 *dirAxis;
 	glm::vec2 plrPos;
@@ -50,6 +65,8 @@ public:
 	void processInternals(float dt, glm::vec2 dirAxR);
 	void drawMe();
 	void applyDamage(float amt);
+	void increaseHp() { hp++; };
+	void increaseHp(int amt) { hp+=amt; };
 	void setPlrPos(glm::vec2 bPPos) { plrPos = bPPos; };
 	void setTargetPos(glm::vec2 bPPos) { targetPos = bPPos; };
 	void setCanShoot(bool vCanShoot) { canShoot = vCanShoot; };
@@ -59,6 +76,7 @@ public:
 	void setCollisionRadius(float v) { collisionR = v; };
 	void setTeam(int v) { team = v; };
 	void setHp(float v) { hp = v; };
+	void setPostHitTimer(float v) { postHitTimer = v; };
 
 	bool getOutOfBounds(bool restrictX, bool restrictY, bool ignoreYmax);
 	int getBulletId() { return bulletId; };
@@ -67,6 +85,8 @@ public:
 	bool getCanShoot() { return canShoot; };
 	bool getDed() { return ded; }	
 	bool getIsBullet() { return isBullet; };
+	bool getIsPowerUp() { return isPowerUp; };
+	int getPowerupType() { return powerUpType; }
 	float getRadius() { return r; };
 	float getCollisionRadius() { return r; };
 	int getTeam() { return team; };
@@ -74,8 +94,8 @@ public:
 	float getDamage() { return dmg; };
 	float getHp() { return hp; }
 	int getScoreValue() { return scoreValue; };
-
-
+	int getMyType() { return myType; };
+	bool getIsBoss() { return isBoss; };
 };
 
 
