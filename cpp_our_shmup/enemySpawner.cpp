@@ -43,6 +43,22 @@ void enemySpawner::iterate(float dt)
 		{
 			if (rand()%2==1) spawnEnemyWave(1,rand()%3);
 			else spawnEnemyWave(4, rand() % 3);
+			iterationLocked = true;
+		}
+	}
+
+	if ((int)iteration % 20 == 0 && iteration > 250)
+	{
+		iterationLocked = true;
+	    spawnEnemyWave(7, rand() % 3);
+	}
+
+	if ((int)iteration % 9 == 0)
+	{
+		if (rand() % 101 < 41 + round(iteration / 250.0f)) //eneme
+		{
+			spawnEnemy(7, glm::vec2((float)(rand() % 721 - 360), 350.0f), glm::vec2(0.0f));
+			iterationLocked = true;
 		}
 	}
 
@@ -53,11 +69,33 @@ void enemySpawner::iterate(float dt)
 		if (rand() % 101 < hpc) //hp
 		{
 			spawnEnemy(5, glm::vec2((float)(rand() % 721 - 360), 350.0f), glm::vec2(0.0f));
+			iterationLocked = true;
 		}
 	}
 
+	if ((int)iteration % 20 == 0)
+	{
+		int hpc = 35 - 2*round(iteration / 250.0f);
+		if (hpc < 2) hpc = 2;
+		
+		if (rand() % 101 < hpc) //gun
+		{
+			spawnEnemy(8, glm::vec2((float)(rand() % 721 - 360), 350.0f), glm::vec2(0.0f));
+			iterationLocked = true;
+		}
+	}
+
+	//if ((*pFlyers)[0]!=NULL)
+	//	if ((*pFlyers)[0]->getGunLevel() < (iteration / 200)+1)
+	//		if (rand() % 101 < 20)
+	//	{
+	//		spawnEnemy(8, glm::vec2((float)(rand() % 721 - 360), 350.0f), glm::vec2(0.0f));
+	//		iterationLocked = true;
+	//	}
+
 	if ((int)iteration % 250 == 0)
 	{
+		iterationLocked = true;
 		spawnEnemy(6, glm::vec2(0.0f, 350.0f), glm::vec2(0.0f));
 	}
 
@@ -76,7 +114,9 @@ int texIndexByEnemyId(int enemyId)
 	if (enemyId == 3) return 2; //enemy bullet
 	if (enemyId == 4) return 3; //enemy ship 2
 	if (enemyId == 5) return 4; //hp powerup
-	if (enemyId == 6) return 5; //hp powerup
+	if (enemyId == 6) return 5; //boss 1
+	if (enemyId == 7) return 6; //enemy ship 3
+	if (enemyId == 8) return 7; //gun powerup
 }
 
 void enemySpawner::spawnEnemy(int eType, glm::vec2 spos, glm::vec2 tpos)
@@ -85,7 +125,7 @@ void enemySpawner::spawnEnemy(int eType, glm::vec2 spos, glm::vec2 tpos)
 	{
 	    glm::vec2 spawnPos(0.0f);
 		int aR = 1, aC = 1;
-		if (eType == 1 || eType == 4 || eType == 5 | eType == 6)
+		if (eType == 1 || eType == 4 || eType == 5 || eType == 6 || eType == 7 || eType == 8)
 		{
 			spawnPos = spos;
 			aR = 2;
@@ -100,7 +140,7 @@ void enemySpawner::spawnEnemy(int eType, glm::vec2 spos, glm::vec2 tpos)
 		pFlyers->push_back(
 			new flyer(eType, spawnPos, tpos, pMgr, 25.0f, texIndices[texIndexByEnemyId(eType)], aR, aC)
 		);
-		std::cout << "Enemy " << eType << " spawned (iter =="<< iteration <<")!\n";
+		//std::cout << "Enemy " << eType << " spawned (iter =="<< iteration <<")!\n";
 	}
 		
 }
@@ -154,7 +194,13 @@ void enemySpawner::runFiring()
 				//spawn a bullet
 
 				glm::vec2 csPos = (*pFlyers)[i]->getPos();
-				glm::vec2 tsPos = (*pFlyers)[i]->getTargetPos();
+				glm::vec2 tsPos(0.0f);
+
+				if (rand()%2==0)
+				  tsPos = (*pFlyers)[i]->getTargetPos();
+				else
+				  tsPos = csPos - glm::vec2(0.0f, 100.0f);
+
 				spawnEnemy(
 					(*pFlyers)[i]->getBulletId(),
 					csPos,
@@ -173,6 +219,50 @@ void enemySpawner::runFiring()
 				//report on firing
 				printf("Ship %d trying to shoot: p = %f, %f; t = %f, %f\n",
 					i, csPos.x, csPos.y, tsPos.x, tsPos.y);
+			}
+			else if ((*pFlyers)[i]->getMyType() == 7)
+			{
+				//remove can shoot flag
+				(*pFlyers)[i]->setCanShoot(false);
+				//spawn a bullet
+
+				glm::vec2 csPos = (*pFlyers)[i]->getPos();
+				glm::vec2 tsPos(0.0f);
+				float iAng = 0.0f;
+
+				for (iAng = 0.0f; iAng < 360.0f; iAng += 30)
+				{
+					tsPos.x = csPos.x + 100.0f * sin(iAng*3.14f / 180.0f);
+					tsPos.y = csPos.y + 100.0f * cos(iAng*3.14f / 180.0f);
+					spawnEnemy(
+						(*pFlyers)[i]->getBulletId(),
+						csPos,
+						tsPos
+					);
+				}
+			}
+			else if ((*pFlyers)[i]->getMyType() == 0)
+			{
+				//remove can shoot flag
+				(*pFlyers)[i]->setCanShoot(false);
+				//spawn a bullet
+				int gl = (*pFlyers)[i]->getGunLevel();
+				float gd = 16.0f;
+				float gw = gd * (float)gl;
+				float gx = gw / 2.0f;
+
+				for (int jj = 0; jj < gl; jj++)
+				{
+					glm::vec2 cShift(-gx + gd * jj, 0.0f);
+					glm::vec2 csPos = (*pFlyers)[i]->getPos() + cShift;
+					glm::vec2 tsPos = csPos + cShift;
+					spawnEnemy(
+						(*pFlyers)[i]->getBulletId(),
+						csPos,
+						tsPos
+					);
+				}
+				
 			}
 			else
 			{
@@ -232,7 +322,8 @@ void enemySpawner::checkBulletCollisions()
 			float od = getDist((*pFlyers)[i]->getPos(), (*pFlyers)[0]->getPos());
 			if (od < 32.0f)
 			{
-				if ((*pFlyers)[i]->getPowerupType() == 0) (*pFlyers)[0]->increaseHp();
+				if ((*pFlyers)[i]->getPowerupType() == 1) (*pFlyers)[0]->increaseHp();
+				if ((*pFlyers)[i]->getPowerupType() == 2) (*pFlyers)[0]->upgradeGun();
 				(*pFlyers)[i]->setDed(true);
 			}
 		}

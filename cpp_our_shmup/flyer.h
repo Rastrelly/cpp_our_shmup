@@ -34,7 +34,11 @@ private:
 
 	bool isBoss;          //flyer is boss
 
-	int powerUpType;      //1 - healing
+	int powerUpType;      //1 - healing, 2 - gun
+
+	int gunLevel;		  //amount of bullets spawned
+
+
 	
 	//working values
 	int cframe;
@@ -77,6 +81,7 @@ public:
 	void setTeam(int v) { team = v; };
 	void setHp(float v) { hp = v; };
 	void setPostHitTimer(float v) { postHitTimer = v; };
+	void upgradeGun() { gunLevel++; };
 
 	bool getOutOfBounds(bool restrictX, bool restrictY, bool ignoreYmax);
 	int getBulletId() { return bulletId; };
@@ -96,6 +101,7 @@ public:
 	int getScoreValue() { return scoreValue; };
 	int getMyType() { return myType; };
 	bool getIsBoss() { return isBoss; };
+	int getGunLevel() { return gunLevel; };
 };
 
 

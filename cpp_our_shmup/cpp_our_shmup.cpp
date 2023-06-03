@@ -247,7 +247,7 @@ void getInputAxisState(GLFWwindow *wnd, glm::vec2 &axState)
 
 		cAxState.x = abs(state.axes[GLFW_GAMEPAD_AXIS_LEFT_X]) > 0.05 ? state.axes[GLFW_GAMEPAD_AXIS_LEFT_X] : 0.0f;
 		cAxState.y = abs(state.axes[GLFW_GAMEPAD_AXIS_LEFT_Y]) > 0.05 ? -state.axes[GLFW_GAMEPAD_AXIS_LEFT_Y] : 0.0f;
-		std::printf("GAMEPAD AX L: %f ; %f\n", cAxState.x, cAxState.y);
+		//std::printf("GAMEPAD AX L: %f ; %f\n", cAxState.x, cAxState.y);
 	}
 
 	//for keyboard
@@ -308,8 +308,10 @@ int main()
 	unsigned int groundtex = makeTexture("ground1.png");
 	unsigned int enemtex = makeTexture("spsheet_enemy_1.png");
 	unsigned int enemtex2 = makeTexture("spsheet_enemy_2.png");
+	unsigned int enemtex3 = makeTexture("spsheet_enemy_3.png");
 	unsigned int boss1tex = makeTexture("spsheet_boss_1.png");
 	unsigned int pup1 = makeTexture("spsheet_heal.png");
+	unsigned int pup2 = makeTexture("spsheet_gun.png");
 	unsigned int bulletTex = makeTexture("bullet01.png");
 	unsigned int bulletTex2 = makeTexture("bullet02.png");
 	unsigned int uihp = makeTexture("hp_mark.png");
@@ -323,6 +325,8 @@ int main()
 	eSpawn.addIndexedTexture(enemtex2);
 	eSpawn.addIndexedTexture(pup1);
 	eSpawn.addIndexedTexture(boss1tex);
+	eSpawn.addIndexedTexture(enemtex3);
+	eSpawn.addIndexedTexture(pup2);
 
 	FontWorker fWork("C:\\Windows\\Fonts\\arial.ttf");
 

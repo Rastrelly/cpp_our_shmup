@@ -41,14 +41,15 @@ flyer::flyer(int vmyType, glm::vec2 vpos, glm::vec2 tpos,
 	//set up ship/bullet specific properties
 	if (myType == 0) //plr ship
 	{
-		speed = 300.0f;
+		speed = 350.0f;
 		diesOob = false;
 		reloadTime = 0.2f;
 		reloadTimer = reloadTime;
 		bulletId = 2;
 		hp = 3.0f;
 		team = 0;
-		collisionR = 0.5f * vr;
+		collisionR = 0.2f * vr;
+		gunLevel = 1;
 	}
 
 	if (myType == 1) //en 1
@@ -65,7 +66,7 @@ flyer::flyer(int vmyType, glm::vec2 vpos, glm::vec2 tpos,
 
 	if (myType == 2) //plr bullet
 	{
-		speed = 600.0f;
+		speed = 650.0f;
 		reloadTime = 0.0f;
 		reloadTimer = reloadTime;
 		bulletId = -1;
@@ -75,12 +76,12 @@ flyer::flyer(int vmyType, glm::vec2 vpos, glm::vec2 tpos,
 		isBullet = true;
 		team = 0;
 		myTrajectory = 0;
-		collisionR = 1.1f * vr;
+		collisionR = 1.1f * r;
 	}
 
 	if (myType == 3) //en bullet
 	{
-		speed = 500.0f;
+		speed = 400.0f;
 		reloadTime = 0.0f;
 		reloadTimer = reloadTime;
 		bulletId = -1;
@@ -89,7 +90,7 @@ flyer::flyer(int vmyType, glm::vec2 vpos, glm::vec2 tpos,
 		dmg = 1.0f;
 		isBullet = true;
 		myTrajectory = 0;
-		collisionR = 0.8f * vr;
+		collisionR = 0.8f * r;
 	}
 
 	if (myType == 4) //en 2
@@ -114,11 +115,13 @@ flyer::flyer(int vmyType, glm::vec2 vpos, glm::vec2 tpos,
 		bulletId = -1;
 		dir = glm::normalize(tpos - pos);
 		r = 16.0f;
+		collisionR = 1.1f * r;
 		dmg = 0.0f;
 		isBullet = false;
 		isPowerUp = true;
 		myTrajectory = 0;
 		team = 0;
+		powerUpType = 1;
 	}
 
 	if (myType == 6) //boss 1
@@ -131,10 +134,40 @@ flyer::flyer(int vmyType, glm::vec2 vpos, glm::vec2 tpos,
 		r = 64.0f;
 		dmg = 0.0f;
 		myTrajectory = 0;
-		collisionR = 1.0f * vr;
-		hp = 20;
+		collisionR = 1.0f * r;
+		hp = 40;
 		isBoss = true;
 		scoreValue = 1000;
+	}
+
+	if (myType == 7) //en 3
+	{
+		speed = 200.0f;
+		reloadTime = 0.9f;
+		reloadTimer = reloadTime;
+		bulletId = 3;
+		hp = 5.0f;
+		r = 48.0;
+		scoreValue = 350;
+		myTrajectory = 0;
+		collisionR = 1.1f * r;
+	}
+
+	if (myType == 8) //gun powerup
+	{
+		speed = 200.0f;
+		reloadTime = 0.0f;
+		reloadTimer = reloadTime;
+		bulletId = -1;
+		dir = glm::normalize(tpos - pos);
+		r = 16.0f;
+		collisionR = 1.1f * r;
+		dmg = 0.0f;
+		isBullet = false;
+		isPowerUp = true;
+		myTrajectory = 0;
+		team = 0;
+		powerUpType = 2;
 	}
 }
 
@@ -208,7 +241,7 @@ void flyer::processInternals(float dt, glm::vec2 dirAxR)
 		//printf("Moveinp: x = %f, y = %f, dx = %f, dy = %f, spd = %f, dt = %f\n", pos.x, pos.y, dir.x, dir.y, speed, dt);
 	}
 
-	if (myType == 1 || myType == 5) //enemy 1 or powerup
+	if (myType == 1 || myType == 5 || myType == 7 || myType == 8) //enemy 1 or powerup
 	{
 		dir = glm::vec2(0.0f,-1.0f);
 		moveVec = dir * speed * dt;
