@@ -5,6 +5,9 @@
 class enemySpawner
 {
 public:
+
+	int gameLevel;
+
 	bool iterationLocked;
 	float iteration;
 	float timer;
@@ -13,6 +16,8 @@ public:
 	int * pScore;
 
 	std::vector<unsigned int> texIndices;
+	std::vector<unsigned int> groundTextures;
+	int cGroundTex;
 
 	enemySpawner(std::vector<flyer*> *flyersContainer,
 		OGLManager * mgr, int * scoreRef);
@@ -22,7 +27,11 @@ public:
 	void runFiring();
 	void spawnEnemy(int eType, glm::vec2 spos, glm::vec2 tpos);
 	void spawnEnemyWave(int eType, int waveType);
+	void addGroundTexture(unsigned int gt);
 	void checkBulletCollisions();
 	bool bossExists();
+	void nextlevel() { gameLevel++; };
+	void resetLevel() { gameLevel = 1; };
+	
 };
 

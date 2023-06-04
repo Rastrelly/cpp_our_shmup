@@ -311,6 +311,9 @@ void flyer::processInternals(float dt, glm::vec2 dirAxR)
 
 void flyer::drawMe()
 {
+	float zPos = 0.0f;
+	if (isPowerUp) zPos = 0.1f;
+	if (isBullet) zPos = 0.2f;
 	glm::vec3 npos(pos.x,pos.y,0.0f);
 	if (!hideSprite)
 	drawSprites(myManager->getShader(0), npos, glm::vec3(r), glm::vec3(1.0f), myTex, true, animR, animC, cframe);

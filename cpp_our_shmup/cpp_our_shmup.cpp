@@ -305,7 +305,6 @@ int main()
 	glfwSetWindowSizeCallback(oMan.window, window_callback);
 
     temptex = makeTexture("spsheet_plane.png");
-	unsigned int groundtex = makeTexture("ground1.png");
 	unsigned int enemtex = makeTexture("spsheet_enemy_1.png");
 	unsigned int enemtex2 = makeTexture("spsheet_enemy_2.png");
 	unsigned int enemtex3 = makeTexture("spsheet_enemy_3.png");
@@ -327,6 +326,10 @@ int main()
 	eSpawn.addIndexedTexture(boss1tex);
 	eSpawn.addIndexedTexture(enemtex3);
 	eSpawn.addIndexedTexture(pup2);
+	
+	eSpawn.addGroundTexture(makeTexture("ground1.png"));
+	eSpawn.addGroundTexture(makeTexture("ground2.png"));
+	eSpawn.addGroundTexture(makeTexture("ground3.png"));
 
 	FontWorker fWork("C:\\Windows\\Fonts\\arial.ttf");
 
@@ -390,9 +393,9 @@ int main()
 			if (!pause)
 			runTimer(terra_timer, deltaTime, 10.0f);
 			terra_shift = terra_timer * 80.0f;
-			drawSprites(oMan.getShader(0), glm::vec3(0.0f, 300.0f - (terra_shift - 800.0f), -1.0f), glm::vec3(400.0f), glm::vec3(1.0f), groundtex, true, 1, 1, 0);
-			drawSprites(oMan.getShader(0), glm::vec3(0.0f, 300.0f - terra_shift, -1.0f), glm::vec3(400.0f), glm::vec3(1.0f), groundtex, true, 1, 1, 0);
-			drawSprites(oMan.getShader(0), glm::vec3(0.0f, 300.0f - (terra_shift + 800.0f), -1.0f), glm::vec3(400.0f), glm::vec3(1.0f), groundtex, true, 1, 1, 0);
+			drawSprites(oMan.getShader(0), glm::vec3(0.0f, 300.0f - (terra_shift - 800.0f), -1.0f), glm::vec3(400.0f), glm::vec3(1.0f), eSpawn.groundTextures[eSpawn.cGroundTex], true, 1, 1, 0);
+			drawSprites(oMan.getShader(0), glm::vec3(0.0f, 300.0f - terra_shift, -1.0f), glm::vec3(400.0f), glm::vec3(1.0f), eSpawn.groundTextures[eSpawn.cGroundTex], true, 1, 1, 0);
+			drawSprites(oMan.getShader(0), glm::vec3(0.0f, 300.0f - (terra_shift + 800.0f), -1.0f), glm::vec3(400.0f), glm::vec3(1.0f), eSpawn.groundTextures[eSpawn.cGroundTex], true, 1, 1, 0);
 
 			//process flyers
 			if (!pause)
@@ -439,7 +442,7 @@ int main()
 				{
 					float hpX = 380.0f - ((plHp-i-1) * 32);
 					float hpY = 280.0f;
-					drawPlane(oMan.getShader(0), glm::vec3(hpX, hpY, 0.0f), glm::vec3(16.0f), glm::vec3(1.0f), uihp, true);
+					drawPlane(oMan.getShader(0), glm::vec3(hpX, hpY, 0.4f), glm::vec3(16.0f), glm::vec3(1.0f), uihp, true);
 				}
 			}
 

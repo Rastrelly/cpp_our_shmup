@@ -105,6 +105,7 @@ bool OGLManager::initOGL(int pwx, int pwy, GLFWframebuffersizefun callback)
 	glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 
 	glEnable(GL_BLEND);
+	glEnable(GL_DEPTH_TEST);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	glfwSetFramebufferSizeCallback(window, callback);

@@ -9,6 +9,7 @@ enemySpawner::enemySpawner(std::vector<flyer*> *flyersContainer,
 	iteration = 0.0f;
 	iterationLocked = true;
 	pScore = scoreRef;
+	gameLevel = 1;
 }
 
 void enemySpawner::iterate(float dt)
@@ -85,18 +86,11 @@ void enemySpawner::iterate(float dt)
 		}
 	}
 
-	//if ((*pFlyers)[0]!=NULL)
-	//	if ((*pFlyers)[0]->getGunLevel() < (iteration / 200)+1)
-	//		if (rand() % 101 < 20)
-	//	{
-	//		spawnEnemy(8, glm::vec2((float)(rand() % 721 - 360), 350.0f), glm::vec2(0.0f));
-	//		iterationLocked = true;
-	//	}
-
 	if ((int)iteration % 250 == 0)
 	{
 		iterationLocked = true;
 		spawnEnemy(6, glm::vec2(0.0f, 350.0f), glm::vec2(0.0f));
+		cGroundTex = rand() % groundTextures.size();
 	}
 
 }
@@ -341,4 +335,10 @@ bool enemySpawner::bossExists()
 		if ((*pFlyers)[i]->getIsBoss()) return true;
 	}
 	return false;
+}
+
+
+void enemySpawner::addGroundTexture(unsigned int gt)
+{
+	groundTextures.push_back(gt);
 }
