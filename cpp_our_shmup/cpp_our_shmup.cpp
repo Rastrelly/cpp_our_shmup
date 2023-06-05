@@ -202,10 +202,21 @@ void getInputAxisState(GLFWwindow *wnd, glm::vec2 &axState)
 	usrWannaShoot = false;
 
 	//for gamepad
-	if (glfwJoystickIsGamepad(GLFW_JOYSTICK_1))
+	int aj = GLFW_JOYSTICK_1;
+	for (int i = 0; i < 12; i++)
+	{
+		if (glfwJoystickIsGamepad(i))
+		{
+			aj = i; break;
+		}
+	}
+
+	std::cout << "Active joystick: " << aj << std::endl;
+
+	if (glfwJoystickIsGamepad(aj))
 	{
 		GLFWgamepadstate state;
-		if (glfwGetGamepadState(GLFW_JOYSTICK_1, &state))
+		if (glfwGetGamepadState(aj, &state))
 		{
 			if (state.buttons[GLFW_GAMEPAD_BUTTON_A]==GLFW_PRESS)
 			{
