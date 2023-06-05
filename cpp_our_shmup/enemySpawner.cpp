@@ -173,6 +173,55 @@ void enemySpawner::spawnEnemyWave(int eType, int waveType)
 	}
 }
 
+void enemySpawner::makeAttack(int attType, int bId, glm::vec2 csPos, glm::vec2 tsPos)
+{
+	if (attType == 0)
+	{
+		spawnEnemy(
+			bId,
+			csPos,
+			tsPos
+		);
+	}
+
+
+	if (attType == 1)
+	{
+		spawnEnemy(
+			bId,
+			csPos,
+			tsPos
+		);
+		spawnEnemy(
+			bId,
+			csPos + glm::vec2(-20.0f, 0.0f),
+			tsPos + glm::vec2(-20.0f, 0.0f)
+		);
+		spawnEnemy(
+			bId,
+			csPos + glm::vec2(20.0f, 0.0f),
+			tsPos + glm::vec2(20.0f, 0.0f)
+		);
+	}
+
+
+	if (attType == 2)
+	{
+		float iAng = 0.0f;
+
+		for (iAng = 0.0f; iAng < 360.0f; iAng += 30)
+		{
+			tsPos.x = csPos.x + 100.0f * sin(iAng*3.14f / 180.0f);
+			tsPos.y = csPos.y + 100.0f * cos(iAng*3.14f / 180.0f);
+			spawnEnemy(
+				bId,
+				csPos,
+				tsPos
+			);
+		}
+	}
+}
+
 
 void enemySpawner::runFiring()
 {
@@ -195,21 +244,8 @@ void enemySpawner::runFiring()
 				else
 				  tsPos = csPos - glm::vec2(0.0f, 100.0f);
 
-				spawnEnemy(
-					(*pFlyers)[i]->getBulletId(),
-					csPos,
-					tsPos
-				);
-				spawnEnemy(
-					(*pFlyers)[i]->getBulletId(),
-					csPos + glm::vec2(-20.0f,0.0f),
-					tsPos + glm::vec2(-20.0f, 0.0f)
-				);
-				spawnEnemy(
-					(*pFlyers)[i]->getBulletId(),
-					csPos + glm::vec2(20.0f, 0.0f),
-					tsPos + glm::vec2(20.0f, 0.0f)
-				);
+				makeAttack(1, (*pFlyers)[i]->getBulletId(),csPos, tsPos);
+				
 				//report on firing
 				printf("Ship %d trying to shoot: p = %f, %f; t = %f, %f\n",
 					i, csPos.x, csPos.y, tsPos.x, tsPos.y);
@@ -222,18 +258,7 @@ void enemySpawner::runFiring()
 
 				glm::vec2 csPos = (*pFlyers)[i]->getPos();
 				glm::vec2 tsPos(0.0f);
-				float iAng = 0.0f;
-
-				for (iAng = 0.0f; iAng < 360.0f; iAng += 30)
-				{
-					tsPos.x = csPos.x + 100.0f * sin(iAng*3.14f / 180.0f);
-					tsPos.y = csPos.y + 100.0f * cos(iAng*3.14f / 180.0f);
-					spawnEnemy(
-						(*pFlyers)[i]->getBulletId(),
-						csPos,
-						tsPos
-					);
-				}
+				makeAttack(2, (*pFlyers)[i]->getBulletId(), csPos, tsPos);
 			}
 			else if ((*pFlyers)[i]->getMyType() == 0)
 			{
@@ -250,11 +275,7 @@ void enemySpawner::runFiring()
 					glm::vec2 cShift(-gx + gd * jj, 0.0f);
 					glm::vec2 csPos = (*pFlyers)[i]->getPos() + cShift;
 					glm::vec2 tsPos = csPos + cShift;
-					spawnEnemy(
-						(*pFlyers)[i]->getBulletId(),
-						csPos,
-						tsPos
-					);
+					makeAttack(0, (*pFlyers)[i]->getBulletId(), csPos, tsPos);
 				}
 				
 			}
@@ -266,11 +287,8 @@ void enemySpawner::runFiring()
 
 				glm::vec2 csPos = (*pFlyers)[i]->getPos();
 				glm::vec2 tsPos = (*pFlyers)[i]->getTargetPos();
-				spawnEnemy(
-					(*pFlyers)[i]->getBulletId(),
-					csPos,
-					tsPos
-				);
+				makeAttack(0, (*pFlyers)[i]->getBulletId(), csPos, tsPos);
+
 				//report on firing
 				printf("Ship %d trying to shoot: p = %f, %f; t = %f, %f\n",
 					i, csPos.x, csPos.y, tsPos.x, tsPos.y);
